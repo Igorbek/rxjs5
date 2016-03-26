@@ -25,6 +25,12 @@ describe('Observable.generate', () => {
 
     expectObservable(source).toBe(expected, { '1': 1, '2': 2 });
   });
+  it('should use result selector', () => {
+    const source = Observable.generate(1, x => x < 3, x => x + 1, x => (x + 1).toString());
+    const expected = '(23|)';
+
+    expectObservable(source).toBe(expected);
+  });
   it('should stop producing when unsubscribed', () => {
     const source = Observable.generate(1, x => x < 4, x => x + 1);
     let count = 0;

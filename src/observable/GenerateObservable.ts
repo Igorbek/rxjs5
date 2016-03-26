@@ -109,7 +109,7 @@ export class GenerateObservable<T, S> extends Observable<T> {
       state = this.iterate(state);
     } while (true);
   }
-  
+
   private static dispatch<T, S>(state: SchedulerState<T, S>) {
     if (state.params.subscriber.isUnsubscribed) {
       return;

@@ -29,19 +29,29 @@ export interface GenerateOptions<T, S> {
 }
 
 export class GenerateObservable<T, S> extends Observable<T> {
-  constructor(
-    private initialState: S,
-    private condition: ConditionFunc<S>,
-    private iterate: IterateFunc<S>,
-    private resultSelector: ResultFunc<S, T>,
-    private scheduler?: Scheduler) {
+  constructor(private initialState: S,
+              private condition: ConditionFunc<S>,
+              private iterate: IterateFunc<S>,
+              private resultSelector: ResultFunc<S, T>,
+              private scheduler?: Scheduler) {
       super();
   }
 
-  static create<T, S>(initialState: S, condition: ConditionFunc<S>, iterate: IterateFunc<S>, resultSelector: ResultFunc<S, T>, scheduler?: Scheduler): Observable<T>
-  static create<S>(initialState: S, condition: ConditionFunc<S>, iterate: IterateFunc<S>, scheduler?: Scheduler): Observable<S>
+  static create<T, S>(initialState: S,
+                      condition: ConditionFunc<S>,
+                      iterate: IterateFunc<S>,
+                      resultSelector: ResultFunc<S, T>,
+                      scheduler?: Scheduler): Observable<T>
+  static create<S>   (initialState: S,
+                      condition: ConditionFunc<S>,
+                      iterate: IterateFunc<S>,
+                      scheduler?: Scheduler): Observable<S>
   static create<T, S>(options: GenerateOptions<T, S>): Observable<T>
-  static create<T, S>(initialStateOrOptions: S | GenerateOptions<T, S>, condition?: ConditionFunc<S>, iterate?: IterateFunc<S>, resultSelectorOrObservable?: (ResultFunc<S, T>) | Scheduler, scheduler?: Scheduler): Observable<T> {
+  static create<T, S>(initialStateOrOptions: S | GenerateOptions<T, S>,
+                      condition?: ConditionFunc<S>,
+                      iterate?: IterateFunc<S>,
+                      resultSelectorOrObservable?: (ResultFunc<S, T>) | Scheduler,
+                      scheduler?: Scheduler): Observable<T> {
     if (arguments.length == 1) {
       return new GenerateObservable<T, S>(
         (<GenerateOptions<T, S>>initialStateOrOptions).initialState,
@@ -78,34 +88,36 @@ export class GenerateObservable<T, S> extends Observable<T> {
         resultSelector: this.resultSelector,
         state });
     }
+    const { condition, resultSelector, iterate } = this;
     do {
-      if (this.condition && !this.condition(state)) {
+      if (condition && !condition(state)) {
         subscriber.complete();
         break;
       }
-      let value = this.resultSelector(state);
+      let value = resultSelector(state);
       subscriber.next(value);
       if (subscriber.isUnsubscribed) {
         break;
       }
-      state = this.iterate(state);
+      state = iterate(state);
     } while (true);
   }
 
   private static dispatch<T, S>(state: SchedulerState<T, S>) {
-    if (state.subscriber.isUnsubscribed) {
+    const { subscriber, condition } = state;
+    if (subscriber.isUnsubscribed) {
       return;
     }
-    if (state.condition && !state.condition(state.state)) {
-      state.subscriber.complete();
+    if (condition && !condition(state.state)) {
+      subscriber.complete();
       return;
     }
     const value = state.resultSelector(state.state);
-    state.subscriber.next(value);
-    if (state.subscriber.isUnsubscribed) {
+    subscriber.next(value);
+    if (subscriber.isUnsubscribed) {
       return;
     }
     state.state = state.iterate(state.state);
-    (<Action><any>this).schedule(state);
+    return (<Action><any>this).schedule(state);
   }
 }

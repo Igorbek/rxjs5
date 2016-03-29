@@ -31,6 +31,17 @@ describe('Observable.generate', () => {
 
     expectObservable(source).toBe(expected);
   });
+  /* the following test fails due to bug #1543 */
+  /*it('should allow omit condition', () => {
+    const source = Observable.generate({
+      initialState: 1,
+      iterate: x => x + 1,
+      resultSelector: x => x.toString()
+    }).take(5);
+    const expected = '(12345|)';
+
+    expectObservable(source).toBe(expected);
+  });*/
   it('should stop producing when unsubscribed', () => {
     const source = Observable.generate(1, x => x < 4, x => x + 1);
     let count = 0;
